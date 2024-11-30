@@ -485,34 +485,44 @@ public class QuickNoteListener {
 
     /**
      * 快捷替换
+     * 对文本内容进行各种格式转换和处理
      */
     private static void quickReplace() {
         try {
+            // 设置忽略快速保存标志
             QuickNoteRSyntaxTextViewer.ignoreQuickSave = true;
             QuickNoteForm quickNoteForm = QuickNoteForm.getInstance();
+            // 获取当前文本编辑区域
             RSyntaxTextArea view = QuickNoteForm.quickNoteRSyntaxTextViewerManager.getCurrentRSyntaxTextArea();
 
+            // 获取文本内容并按行分割
             String content = view.getText();
-
+            // 添加到撤销队列
+            view.beginAtomicEdit();
             String[] splits = content.split("\n");
 
+            // 用于存储处理后的行
             List<String> target = Lists.newArrayList();
             for (String split : splits) {
 
+                // 去除空格
                 if (quickNoteForm.getTrimBlankCheckBox().isSelected()) {
                     split = split.replace(" ", "");
                 }
 
+                // 去除空行
                 if (quickNoteForm.getTrimBlankRowCheckBox().isSelected() && StringUtils.isBlank(split)) {
                     continue;
                 }
 
+                // 清除制表符
                 if (quickNoteForm.getClearTabTCheckBox().isSelected()) {
                     split = split.replace("\t", "");
                 }
 
-                // ------------
+                // ------------ 数字格式转换 ------------
 
+                // 科学计数法转普通数字
                 if (quickNoteForm.getScientificToNormalCheckBox().isSelected()) {
                     String[] strs = split.split(" ");
                     List<String> tmp = Lists.newArrayList();
@@ -526,6 +536,7 @@ public class QuickNoteListener {
                     split = StringUtils.join(tmp, " ");
                 }
 
+                // 普通数字转科学计数法
                 if (quickNoteForm.getNormalToScientificCheckBox().isSelected()) {
                     String[] strs = split.split(" ");
                     List<String> tmp = Lists.newArrayList();
@@ -540,6 +551,7 @@ public class QuickNoteListener {
                     split = StringUtils.join(tmp, " ");
                 }
 
+                // 转换为千分位格式
                 if (quickNoteForm.getToThousandthCheckBox().isSelected()) {
                     String[] strs = split.split(" ");
                     List<String> tmp = Lists.newArrayList();
@@ -552,6 +564,7 @@ public class QuickNoteListener {
                     split = StringUtils.join(tmp, " ");
                 }
 
+                // 转换为普通数字格式(去除千分位)
                 if (quickNoteForm.getToNormalNumCheckBox().isSelected()) {
                     String[] strs = split.split(" ");
                     List<String> tmp = Lists.newArrayList();
@@ -565,14 +578,19 @@ public class QuickNoteListener {
                     split = StringUtils.join(tmp, " ");
                 }
 
+                // ------------ 命名格式转换 ------------
+
+                // 下划线转驼峰
                 if (quickNoteForm.getUnderlineToHumpCheckBox().isSelected()) {
                     split = underlineToHump(split);
                 }
 
+                // 驼峰转下划线
                 if (quickNoteForm.getHumpToUnderlineCheckBox().isSelected()) {
                     split = humpToUnderline(split);
                 }
 
+                // 大小写转换
                 if (quickNoteForm.getUperToLowerCheckBox().isSelected()) {
                     split = split.toLowerCase();
                 }
@@ -581,16 +599,20 @@ public class QuickNoteListener {
                     split = split.toUpperCase();
                 }
 
-                // ------------
+                // ------------ 分隔符转换 ------------
+                // 逗号转换为换行
                 if (quickNoteForm.getCommaToEnterCheckBox().isSelected()) {
                     split = split.replace(",", "\n");
                 }
+                // 带单引号的逗号转换为换行
                 if (quickNoteForm.getCommaSingleQuotesToEnterCheckBox().isSelected()) {
                     split = split.replace("','", "\n").replace("'", "");
                 }
+                // 带双引号的逗号转换为换行
                 if (quickNoteForm.getCommaDoubleQuotesToEnterCheckBox().isSelected()) {
                     split = split.replace("\",\"", "\n").replace("\"", "");
                 }
+                // 制表符转换为换行
                 if (quickNoteForm.getTabToEnterCheckBox().isSelected()) {
                     split = split.replace("\t", "\n");
                 }
@@ -598,10 +620,13 @@ public class QuickNoteListener {
                 target.add(split);
             }
 
+            // ------------ 去重处理 ------------
+            // 按行去重
             if (quickNoteForm.getDeduplicationByLineCheckBox().isSelected()) {
                 target = Lists.newArrayList(ArrayUtil.distinct(target.toArray(new String[0])));
             }
 
+            // 按行去重并统计次数
             if (quickNoteForm.getDeduplicationByLineCntCheckBox().isSelected()) {
                 // 按行去重并统计出现次数，结果示例："abc"出现了2次\n"def"出现了3次
                 target = Lists.newArrayList(ArrayUtil.distinct(target.toArray(new String[0])));
@@ -613,30 +638,46 @@ public class QuickNoteListener {
                 target = targetWithCnt;
             }
 
+            // ------------ 输出格式处理 ------------
+            // 清除换行
             if (quickNoteForm.getClearEnterCheckBox().isSelected()) {
                 view.setText(StringUtils.join(target, ""));
-            } else if (quickNoteForm.getEnterToCommaCheckBox().isSelected()) {
+            } 
+            // 换行转逗号
+            else if (quickNoteForm.getEnterToCommaCheckBox().isSelected()) {
                 view.setText(StringUtils.join(target, ","));
-            } else if (quickNoteForm.getEnterToCommaSingleQuotesCheckBox().isSelected()) {
+            } 
+            // 换行转带单引号的逗号
+            else if (quickNoteForm.getEnterToCommaSingleQuotesCheckBox().isSelected()) {
                 view.setText("'" + StringUtils.join(target, "','") + "'");
-            } else if (quickNoteForm.getEnterToCommaDoubleQuotesCheckBox().isSelected()) {
+            } 
+            // 换行转带双引号的逗号
+            else if (quickNoteForm.getEnterToCommaDoubleQuotesCheckBox().isSelected()) {
                 view.setText("\"" + StringUtils.join(target, "\",\"") + "\"");
-            } else {
+            } 
+            // 保持换行
+            else {
                 view.setText(StringUtils.join(target, "\n"));
             }
 
+            // ------------ 转义处理 ------------
+            // Java转义
             if (quickNoteForm.getEscapeCheckBox().isSelected()) {
                 view.setText(StringEscapeUtils.escapeJava(view.getText()));
             }
+            // Java反转义
             if (quickNoteForm.getUnescapeCheckBox().isSelected()) {
                 view.setText(StringEscapeUtils.unescapeJava(view.getText()));
             }
+
+            view.endAtomicEdit();
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(App.mainFrame, "转换失败！\n\n" + e.getMessage(), "失败",
                     JOptionPane.ERROR_MESSAGE);
             log.error(ExceptionUtils.getStackTrace(e));
         } finally {
+            // 恢复快速保存标志
             QuickNoteRSyntaxTextViewer.ignoreQuickSave = false;
         }
 

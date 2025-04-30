@@ -92,11 +92,3 @@ Windows • Linux • macOS
 最低JDK版本要求：**17**  
 在你开始开发之前, **请按下图设置IntelliJ IDEA**, 然后 **maven clean**:
 ![considerations](assets/material/gui_build.png)
-
-## 鼓励/赞赏
-
-**如果MooTool项目对您有所帮助或带来便利，  
-欢迎对我每天下班和周末时光的努力进行肯定，  
-您的赞赏将会给我带来更多动力**
-
-![zanshang](assets/material/wx-zanshang.jpg)
